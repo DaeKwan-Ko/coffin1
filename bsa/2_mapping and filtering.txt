@@ -2,19 +2,19 @@
 # Aim: mapping of cleaned 150-nt pair-end reads to
 # Author: Dae Kwan Ko (dkko@msu.edu)
 # Last modified: 06-11-2021
-# Usage: shown below
+# Usage: This repository provides a detailed WGS mapping and filtering pipeline.
 #------------------------------------------------------------------------------------
 
-### index TAIR10 (chr only) using bowtie2.2.3
+### Step 1: index TAIR10 (chr only) using bowtie2.2.3
 bowtie2-build -f TAIR10_chr_all.fa TAIR10_chr_all
 
-### mapping to the TAIR10 genome using bowtie2.2.3
+### Step 2: mapping to the TAIR10 genome using bowtie2.2.3
 bowtie2 -x ${GENOME} -1 ${INPUT_R1} -2 ${INPUT_R2} -S ${OUTPUT} --threads 10 -X 1000
 
-### checking the mapping stat
+### Step 3: checking the mapping stat
 samtools flagstat ${INPUT} > ${OUTPUT}
 
-### extract reads mapped in correct orientation and within the insert size (flag: 99, 147, 83, 163)
+### Step 4: extract reads mapped in correct orientation and within the insert size (flag: 99, 147, 83, 163)
 ---
 # !/usr/bin/perl
 # Dae Kwan Ko
@@ -75,22 +75,22 @@ close(OUTPUT);
 close(INPUT);
 ---
 
-### Convert to bam (>=mapq 10)
+### Step 5: Convert to bam (>=mapq 10)
 samtools view -S ${INPUT} -q 10 -b -h -o ${OUTPUT} -@ 5
 
-### flagstat on filtered bam files
+### Step 6: flagstat on filtered bam files
 samtools flagstat ${INPUT} > ${OUTPUT}
 
-### sort before rmdup
+### Step 7: sort before rmdup
 samtools sort -o ${OUTPUT} ${INPUT} -@ 5
 
-### remove PCR duplicates
+### Step 8: remove PCR duplicates
 samtools rmdup ${INPUT} ${OUTPUT}
 
-### flagstat
+### Step 9: flagstat
 samtools flagstat ${INPUT} > ${OUTPUT}
 
-### index
+### Step 10: index
 samtools index ${INPUT}
 
 
