@@ -1,4 +1,4 @@
-#The scripts provided in this repository allow analyzing raw data for whole genome sequencing and RNA-seq analyses presented in the following paper (https://doi.org/10.1101/2025.01.08.632046):
+# The scripts provided in this repository allow analyzing raw data for whole genome sequencing and RNA-seq analyses presented in the following paper (https://doi.org/10.1101/2025.01.08.632046):
 
 Title: The MAP kinase scaffold MORG1 shapes cell death in unresolved ER stress in Arabidopsis
 
