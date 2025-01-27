@@ -1,6 +1,6 @@
-#The scripts provided in this repository allow analyzing raw data for whole genome sequencing and RNA-seq analyses presented in the following paper (https://doi.org/xxxxx):
+#The scripts provided in this repository allow analyzing raw data for whole genome sequencing and RNA-seq analyses presented in the following paper (https://doi.org/10.1101/2025.01.08.632046):
 
-Title: The MAP kinase scaffold MORG1 shapes cell death in unresolved ER stress
+Title: The MAP kinase scaffold MORG1 shapes cell death in unresolved ER stress in Arabidopsis
 
 Software and version information: The "bsa/" folder contains scripts for quality control, mapping, variant calling, and bulk segregation analysis. I used the following versions of the programs: FastQC (version 0.11.5), Cutadapt (version 1.8.1), Bowtie (version 2.2.3), Samtools (version 1.8), bcftools (version 1.9.64), SHOREmap (version 3.6).
 
