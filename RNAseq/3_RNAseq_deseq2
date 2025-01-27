@@ -9,7 +9,7 @@ Overview: This repository presents the scripts used for the differential gene ex
 ## R Markdown
 
 ```{r loadLibs}
-rm(list=ls()) # Remove everything from the R environment. Important if you have some variables saved already
+rm(list=ls())
 require(limma)
 require(edgeR)
 require(DESeq2)
@@ -24,11 +24,11 @@ require(dplyr)
 ```
 
 ```{r fileprep}
-rm(list=ls()) # Remove everything from the R environment. Important if you have some variables saved already
+rm(list=ls())
 myFiles <- list.files(pattern = glob2rx("*htseq.txt"), 
                       all.files = T, 
                       full.names = F) # Create a vector containing the names of your files
-myFiles # myFiles is the list of files in your working directory which match the pattern *_htseq.txt.
+myFiles
 myData <- lapply(myFiles, # Use list apply to apply the native R functi on read.table() to myFiles
                  read.table, colClasses=c("character", "numeric"))
 myData
@@ -56,13 +56,10 @@ head(counts)
 ```
 
 ```{r fileprep2}
-# Remove genes with no expression in any samples
-# first, select columns for pair-wise comparisons 
 counts_c <- counts[,c("c_D6_1", "c_D6_2", "c_D6_3", "c_T6_1", "c_T6_2", "c_T6_3")]
 counts_m <- counts[,c("m_D6_1", "m_D6_2", "m_D6_3", "m_T6_1", "m_T6_2", "m_T6_3")]
 counts_s <- counts[,c("s_D6_1", "s_D6_2", "s_D6_3", "s_T6_1", "s_T6_2", "s_T6_3")]
 
-# Let's remove all genes with 0 expression in every sample. Evaluate the sum of each row and save to a new vector called geneTotals.
 geneTotals_c <- rowSums(counts_c)
 geneTotals_m <- rowSums(counts_m)
 geneTotals_s <- rowSums(counts_s)
@@ -79,13 +76,10 @@ nrow(countsNonZero_s)  #19954
 ```
 
 ```{r Start preparing your experimental design info}
-# define the columns of our data set according to their treatment type, the factor in this experiment. Arbitrarily named as ctrl and stress, but these two samples are not in the relationship.
 treatments <- as.factor(c(rep("ctrl",3),rep("stress",3)))
 
-# Create the experimental design with time as the factor.
 design <- model.matrix(~treatments)
 
-# Make a multidimensional scaling plot to quickly summarize the similarity of your samples.
 dge_c <- DGEList(counts = countsNonZero_c, 
                group = treatments, 
                remove.zeros = T)
@@ -111,13 +105,13 @@ plotMDS(dge_s,main="MDS",pch = 19,
 # treatments was our column labels organized as factors
 colData <- DataFrame(treatments)
 
-# Take a look at the colData "data.frame" object. This is called S4 class object in R specifically designed to be operated on differently by various functions, similar to object oriented programming. It is not a normal data.frame.            
+# Take a look at the colData "data.frame" object.        
 colData
 
-# Compare to tissues object. This is an S3 class object, the simplest data type in R.
+# Compare to tissues object.
 treatments
 
-# Create the DESeq object from the counts matrix we made that has > 60 exprssed genes, uses the new colData object we made to label the treatments, and the same experimental design using treatments as the nominal categories. 
+# Create the DESeq object from the counts matrix
 dds_c <- DESeqDataSetFromMatrix(countsNonZero_c, colData=colData, design=formula(~treatments))
 dds_m <- DESeqDataSetFromMatrix(countsNonZero_m, colData=colData, design=formula(~treatments))
 dds_s <- DESeqDataSetFromMatrix(countsNonZero_s, colData=colData, design=formula(~treatments))
@@ -142,10 +136,9 @@ slotNames(dds_c)
 slotNames(dds_m)
 slotNames(dds_s)
 
-# We can look at the contents of these using the **@** symbol instead of **$** which is what would be used for an S3 class object.
 dds_c@colData
 
-# Check out the structure of the DESeq data set. You can see it is quite complex, and you can use this print out to help you subset any information from the data set.
+# Check out the structure of the DESeq data set.
 str(dds_c)
 
 # Plot gene dispersion correlations and other trends
@@ -176,9 +169,6 @@ res_dds_c <- results(dds_c, name="treatments_stress_vs_ctrl")
 res_dds_m <- results(dds_m, name="treatments_stress_vs_ctrl")
 res_dds_s <- results(dds_s, name="treatments_stress_vs_ctrl")
 
-# I wanted to test how lfcShrink can change the FC. LFCs shrinkage can be used to avoid bias in genes with low read coverage
-# ref: https://www.biostars.org/p/340269/
-# To use apeglm we specify a coefficient from the model to shrink, either by name or number as the coefficient appears in resultsNames(dds).
 resultsNames(dds_c)
 resultsNames(dds_m)
 resultsNames(dds_s)
@@ -186,13 +176,10 @@ resultsNames(dds_s)
 res.shr_dds_c <- lfcShrink(dds_c, coef="treatments_stress_vs_ctrl", type="apeglm")
 res.shr_dds_m <- lfcShrink(dds_m, coef="treatments_stress_vs_ctrl", type="apeglm")
 res.shr_dds_s <- lfcShrink(dds_s, coef="treatments_stress_vs_ctrl", type="apeglm")
-# It is particularly useful for lowly expressed genes because they have high variability and shrinkage can reduce it. 
 ```
 
 
 ```{r MA plot}
-# In some samples, there were some differences between non-shrink and shrink, especially for those that were lowly expressed
-# shrinking is needed? will be used
 plotMA(res.shr_dds_c, ylim=c(-5,5), alpha = 0.05, main = "Col-0 with shrinking") #with shrinking
 plotMA(res_dds_c, ylim=c(-5,5), alpha = 0.05, main = "Col-0 without shrinking") #without shrinking
 
@@ -204,7 +191,6 @@ plotMA(res_dds_s, ylim=c(-5,5), alpha = 0.05, main = "Col-0 without shrinking") 
 ```
 
 
-Visualize the data in volcano plots (https://www.bioconductor.org/packages/release/bioc/vignettes/EnhancedVolcano/inst/doc/EnhancedVolcano.html)
 ```{r volavano plot with labels}
 library(EnhancedVolcano)
 
@@ -214,7 +200,6 @@ vol_m_wL <- EnhancedVolcano(res.shr_dds_m, lab = rownames(res.shr_dds_m), x = 'l
 vol_m_nL <- EnhancedVolcano(res.shr_dds_m, lab = rownames(res.shr_dds_m), x = 'log2FoldChange', y = 'padj', pCutoff = 0.05, FCcutoff = 1, ylim = c(0,320), xlim = c(-6,12), labSize = 0) # without labels
 vol_s_wL <- EnhancedVolcano(res.shr_dds_s, lab = rownames(res.shr_dds_s), x = 'log2FoldChange', y = 'padj', pCutoff = 0.05, FCcutoff = 1, ylim = c(0,320), xlim = c(-6,12)) # with labels
 vol_s_nL <- EnhancedVolcano(res.shr_dds_s, lab = rownames(res.shr_dds_s), x = 'log2FoldChange', y = 'padj', pCutoff = 0.05, FCcutoff = 1, ylim = c(0,320), xlim = c(-6,12), labSize = 0) # without labels
-
 
 vol_c_wL
 vol_c_nL
@@ -249,17 +234,14 @@ dev.off()
 ```
 
 ```{r export results}
-# Removed rows with "NA" in P- value, which DESeq inputs when it detects extreme outliers in samples u sing Cook's distance calculation. These may have a significant effect on the model, or, perhaps the model we used (~treatments) does not account for some property of the data...
 res.shr_dds_c <- res.shr_dds_c[!(is.na(res.shr_dds_c$padj)),]
 res.shr_dds_m <- res.shr_dds_m[!(is.na(res.shr_dds_m$padj)),]
 res.shr_dds_s <- res.shr_dds_s[!(is.na(res.shr_dds_s$padj)),]
 
-# List of genes that were differentially expressed
 deseq2_gene_list_c <- as.data.frame(res.shr_dds_c[res.shr_dds_c$padj < 0.05,])
 deseq2_gene_list_m <- as.data.frame(res.shr_dds_m[res.shr_dds_m$padj < 0.05,])
 deseq2_gene_list_s <- as.data.frame(res.shr_dds_s[res.shr_dds_s$padj < 0.05,])
 
-# export data
 write.table(deseq2_gene_list_c, "deseq2_gene_list_0.05_padj_Col-0.txt", sep="\t")
 write.table(deseq2_gene_list_m, "deseq2_gene_list_0.05_padj_bzip2860.txt", sep="\t")
 write.table(deseq2_gene_list_s, "deseq2_gene_list_0.05_padj_coffin1.txt", sep="\t")
